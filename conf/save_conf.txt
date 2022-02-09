@@ -1,0 +1,23 @@
+host:EPK60018261
+user:postgres
+db:SIEA
+pwd:ADN2020
+port0:5432
+hour_save:07|18
+exclude_DB:template1|template0|postgres
+save_path:cur_path
+postgres_path|C:\Program Files\PostgreSQL\9.4\bin\
+
+Instruction en français :
+- Veuillez séparer les base à exclure par | sans espace ni avant ni après
+- La variable save accepte des heures et doivent être sur une heure pile, chaque heure correspond à une sauvegarde de toutes les bases:
+    - 12 => 12h00
+    - 12.5 => INTERDIT
+- Terminer le chemin d'accès du dossier de sauvegarde (save_path) par un \
+
+
+English instruction :
+- Please separate the databases to exclude with | with no space, not before not after
+- The var save can only contains exact hours, each hours is a save of all databases :
+    - 12 => 12h00
+    - 12.5 => FORBIDDEN
