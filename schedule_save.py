@@ -13,9 +13,8 @@ Project : https://github.com/Jaymon/dump
 
 Comment : This is my first functional script for my professional activity
 '''
-import logging
 import os
-from logging import basicConfig, info
+from logging import basicConfig, info, DEBUG
 from re import sub
 from tempfile import NamedTemporaryFile
 from psycopg2 import connect
@@ -170,7 +169,7 @@ cur_path = os.path.dirname(os.path.abspath(__file__))
 
 # SETUP LOG FILE
 log = "save.log"
-basicConfig(filename=log, level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
+basicConfig(filename=log, level=DEBUG, format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
 
 try:
     with open(cur_path + r"\conf\save_conf.txt", "r") as con_file:
