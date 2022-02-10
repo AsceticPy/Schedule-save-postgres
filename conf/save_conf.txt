@@ -1,7 +1,7 @@
-host:EPK60018261
+host:*******
 user:postgres
-db:SIEA
-pwd:ADN2020
+db:******
+pwd:******
 port0:5432
 hour_save:07|18
 exclude_DB:template1|template0|postgres

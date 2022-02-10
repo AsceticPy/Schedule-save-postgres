@@ -98,7 +98,7 @@ def save_all_db():
     for db_name in list_db:
         if db_name not in exclude_DB:
             os.system('cls' if os.name == 'nt' else 'clear')
-            print(ascii_art)
+            print(f'Sauvegarde en cours de {db_name}')
             path = _get_path(db_name)
             outfile = os.path.join(path, _get_new_name_save(db_name))
             command = ['pg_dump'
@@ -186,13 +186,13 @@ cursor = connexion.cursor()
 
 if choice == 1:
     for hour in hour_save:
-        schedule.every().day.at(hour + ':00')
-    os.system('cls' if os.name == 'nt' else 'clear')
-    print(ascii_art)
-    print('Sauvegarde automatique mise en place')
-    print('Attention : ne pas fermer cette fenêtre.')
+        schedule.every().day.at(hour + ':00').do(save_all_db)
 
     while True:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print(ascii_art)
+        print('Sauvegarde automatique mise en place')
+        print('Attention : ne pas fermer cette fenêtre.')
         schedule.run_pending()
         sleep(1)
 
