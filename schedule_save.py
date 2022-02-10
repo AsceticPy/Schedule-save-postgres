@@ -13,29 +13,27 @@ Project : https://github.com/Jaymon/dump
 
 Comment : This is my first functional script for my professional activity
 '''
-
-
+import logging
 import os
-import sys
-import subprocess
-import psycopg2
-import schedule
-import re
-import tempfile
+from logging import basicConfig, info
+from re import sub
+from tempfile import NamedTemporaryFile
+from psycopg2 import connect
+from subprocess import Popen
+from schedule import every, run_pending
 from datetime import date
 from time import sleep
 
 ascii_art = '''
-      ██████  ▄▄▄    ██▒   █▓▓█████    ▓█████▄  ▄▄▄▄   
-    ▒██    ▒ ▒████▄ ▓██░   █▒▓█   ▀    ▒██▀ ██▌▓█████▄ 
-    ░ ▓██▄   ▒██  ▀█▄▓██  █▒░▒███      ░██   █▌▒██▒ ▄██
-      ▒   ██▒░██▄▄▄▄██▒██ █░░▒▓█  ▄    ░▓█▄   ▌▒██░█▀  
-    ▒██████▒▒ ▓█   ▓██▒▒▀█░  ░▒████▒   ░▒████▓ ░▓█  ▀█▓
-    ▒ ▒▓▒ ▒ ░ ▒▒   ▓▒█░░ ▐░  ░░ ▒░ ░    ▒▒▓  ▒ ░▒▓███▀▒
-    ░ ░▒  ░ ░  ▒   ▒▒ ░░ ░░   ░ ░  ░    ░ ▒  ▒ ▒░▒   ░ 
-    ░  ░  ░    ░   ▒     ░░     ░       ░ ░  ░  ░    ░ 
-          ░        ░  ░   ░     ░  ░      ░     ░      
-                         ░              ░            ░ 
+╔═══╗╔═══╗╔╗ ╔╗╔═══╗╔═══╗╔╗ ╔╗╔╗   ╔═══╗╔═══╗    ╔═══╗╔═══╗╔╗  ╔╗╔═══╗    ╔═══╗╔═══╗╔═══╗╔════╗╔═══╗╔═══╗╔═══╗╔═══╗
+║╔═╗║║╔═╗║║║ ║║║╔══╝╚╗╔╗║║║ ║║║║   ║╔══╝║╔═╗║    ║╔═╗║║╔═╗║║╚╗╔╝║║╔══╝    ║╔═╗║║╔═╗║║╔═╗║║╔╗╔╗║║╔═╗║║╔═╗║║╔══╝║╔═╗║
+║╚══╗║║ ╚╝║╚═╝║║╚══╗ ║║║║║║ ║║║║   ║╚══╗║╚═╝║    ║╚══╗║║ ║║╚╗║║╔╝║╚══╗    ║╚═╝║║║ ║║║╚══╗╚╝║║╚╝║║ ╚╝║╚═╝║║╚══╗║╚══╗
+╚══╗║║║ ╔╗║╔═╗║║╔══╝ ║║║║║║ ║║║║ ╔╗║╔══╝║╔╗╔╝    ╚══╗║║╚═╝║ ║╚╝║ ║╔══╝    ║╔══╝║║ ║║╚══╗║  ║║  ║║╔═╗║╔╗╔╝║╔══╝╚══╗║
+║╚═╝║║╚═╝║║║ ║║║╚══╗╔╝╚╝║║╚═╝║║╚═╝║║╚══╗║║║╚╗    ║╚═╝║║╔═╗║ ╚╗╔╝ ║╚══╗    ║║   ║╚═╝║║╚═╝║ ╔╝╚╗ ║╚╩═║║║║╚╗║╚══╗║╚═╝║
+╚═══╝╚═══╝╚╝ ╚╝╚═══╝╚═══╝╚═══╝╚═══╝╚═══╝╚╝╚═╝    ╚═══╝╚╝ ╚╝  ╚╝  ╚═══╝    ╚╝   ╚═══╝╚═══╝ ╚══╝ ╚═══╝╚╝╚═╝╚═══╝╚═══╝
+                                                                                                                   
+                                                                                                                   
+                                                                                                                                                                    
     '''
 while True:
     print(ascii_art)
@@ -60,9 +58,9 @@ Que voulez-vous faire ?
         pass
 
 
-def set_connexion() -> psycopg2.connect:
+def set_connexion() -> connect:
     try:
-        connex = psycopg2.connect(database=db, user=user, password=pwd, host=host, port=port0)
+        connex = connect(database=db, user=user, password=pwd, host=host, port=port0)
         print('Connexion au serveur réussi')
         return connex
     except:
@@ -78,7 +76,7 @@ def close_connection():
 def get_all_db():
     query = 'SELECT datname FROM pg_database;'
     cursor.execute(query)
-    return list(map(str, (re.sub("['(,)']", "", str(row)) for row in cursor.fetchall())))
+    return list(map(str, (sub("['(,)']", "", str(row)) for row in cursor.fetchall())))
 
 
 def _get_new_name_save(db_name):
@@ -93,7 +91,7 @@ def _get_path(db_name):
     return path
 
 
-def save_all_db():
+def save_all_db(scheduler=True):
     list_db = get_all_db()
     for db_name in list_db:
         if db_name not in exclude_DB:
@@ -113,6 +111,13 @@ def save_all_db():
                         , '{}'.format(db_name)]
 
             _run_cmd(' '.join(command))
+            info('Sauvegarde de {} : OK'.format(db_name))
+
+    if scheduler:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print(ascii_art)
+        print('Sauvegarde automatique en place')
+        print('Attention : ne pas fermer cette fenêtre.')
 
 
 def _get_env():
@@ -139,7 +144,7 @@ def _get_file():
     return an opened tempfile pointer that can be used
     http://docs.python.org/2/library/tempfile.html
     '''
-    f = tempfile.NamedTemporaryFile(delete=False)
+    f = NamedTemporaryFile(delete=False)
     return f
 
 
@@ -150,19 +155,23 @@ def _run_cmd(cmd, ignore_ret_code=False):
         'env': env
     }
 
-    pipe = subprocess.Popen(
+    pipe = Popen(
         cmd,
         **kwargs
         , cwd=postgres_path
     )
     ret_code = pipe.wait()
     if not ignore_ret_code and ret_code > 0:
-        print(ret_code)
-        raise RuntimeError('command {} did not execute correctly'.format(cmd))
+        info('Échec de la sauvegarde : [{}]'.format(cmd))
 
     return pipe
 
 cur_path = os.path.dirname(os.path.abspath(__file__))
+
+# SETUP LOG FILE
+log = "save.log"
+basicConfig(filename=log, level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %H:%M:%S')
+
 try:
     with open(cur_path + r"\conf\save_conf.txt", "r") as con_file:
         host = con_file.readline().strip().split(':')[1]
@@ -185,15 +194,18 @@ connexion = set_connexion()
 cursor = connexion.cursor()
 
 if choice == 1:
+    info('Mise en place de la sauvegarde automatique.')
+    info("Chemin d'accès des fichiers de sauvegarde : {}".format(backup_path))
     for hour in hour_save:
-        schedule.every().day.at(hour + ':00').do(save_all_db)
+        every().day.at(hour + ':00').do(save_all_db)
+
+    os.system('cls' if os.name == 'nt' else 'clear')
+    print(ascii_art)
+    print('Sauvegarde automatique en place')
+    print('Attention : ne pas fermer cette fenêtre.')
 
     while True:
-        os.system('cls' if os.name == 'nt' else 'clear')
-        print(ascii_art)
-        print('Sauvegarde automatique mise en place')
-        print('Attention : ne pas fermer cette fenêtre.')
-        schedule.run_pending()
+        run_pending()
         sleep(1)
 
 elif choice == 2:
