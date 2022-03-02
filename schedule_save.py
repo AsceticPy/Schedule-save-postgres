@@ -198,9 +198,18 @@ def humanbytes(B):
     elif TB <= B:
         return '{0:.2f} TB'.format(B / TB)
 
+def monthly_save():
+    today = date.today()
+    if today == date.today().replace(day=1):
+        info('Début du nettoyage mensuel')
+        keep_min_save()
+        info('Fin du nettoyage mensuel')
+
 def keep_min_save():
     #All date was calculated from the monday
     date_of_the_day = date.today()
+    if date_of_the_day != date.today().replace(day=1):
+        info('Début du nettoyage hebdomadaire')
     date_of_last_friday = date.today() - timedelta(days=3)
     date_of_last_monday = date_of_last_friday - timedelta(days=7)
     first_day_of_the_last_month = (date.today().replace(day=1) - timedelta(days=1)).replace(day=1)
@@ -226,6 +235,8 @@ def keep_min_save():
                         os.remove(file)
                         info('Supression de la sauvegarde : [{}] suite au nettoyage hebdomadaire'.format(file_name))
     info('Le nettoyage à fait gagner un total de {} sur le serveur.'.format(humanbytes(total_size_save)))
+    if date_of_the_day != date.today().replace(day=1):
+        info('Fin du nettoyage hebdomadaire')
 
 
 def get_config():
@@ -267,11 +278,10 @@ if choice == 1:
     info("Chemin d'accès des fichiers de sauvegarde : {}".format(backup_path))
     for hour in hour_save:
         every().day.at(hour + ':00').do(save_all_db)
+        every().day.at('00:00').do(get_config)
 
-    # We read the file config at every 10 min less the global hour save for change
-
-    every().day.at(hour - 1 + ':50').do(get_config)
-    every().monday.at('23:00').do(keep_min_save())
+    every().monday.at('23:00').do(keep_min_save)
+    every().day.at('01:00').do(monthly_save)
     os.system('cls' if os.name == 'nt' else 'clear')
     print(ascii_art)
     print('Sauvegarde automatique en place')
