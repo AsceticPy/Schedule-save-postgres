@@ -278,10 +278,11 @@ if choice == 1:
     info("Chemin d'accès des fichiers de sauvegarde : {}".format(backup_path))
     for hour in hour_save:
         every().day.at(hour + ':00').do(save_all_db)
-        every().day.at('00:00').do(get_config)
 
-    every().monday.at('23:00').do(keep_min_save)
+    every().day.at('00:00').do(get_config)
     every().day.at('01:00').do(monthly_save)
+    every().monday.at('23:00').do(keep_min_save)
+    
     os.system('cls' if os.name == 'nt' else 'clear')
     print(ascii_art)
     print('Sauvegarde automatique en place')
